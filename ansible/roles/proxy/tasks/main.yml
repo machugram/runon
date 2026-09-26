@@ -1,0 +1,55 @@
+---
+- name: Refresh apt cache
+  ansible.builtin.apt:
+    update_cache: true
+  changed_when: false
+
+- name: Install nginx
+  ansible.builtin.apt:
+    name: nginx
+    state: present
+
+- name: Install nginx process runner
+  ansible.builtin.copy:
+    src: run-nginx
+    dest: /usr/local/bin/run-nginx
+    mode: "0755"
+
+- name: Install nginx config
+  ansible.builtin.template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+    mode: "0644"
+  notify:
+    - Reload nginx process
+    - Reload nginx systemd
+
+- name: Install nginx systemd unit
+  ansible.builtin.template:
+    src: nginx-platform.service.j2
+    dest: /etc/systemd/system/nginx-platform.service
+    mode: "0644"
+  notify: Reload nginx systemd
+
+- name: Check nginx
+  ansible.builtin.command: /usr/local/bin/run-nginx status
+  register: nginx_status
+  changed_when: false
+  failed_when: false
+  when: platform_service_mgr == "process"
+
+- name: Start nginx
+  ansible.builtin.command: /usr/local/bin/run-nginx start
+  register: nginx_start
+  changed_when: nginx_start.stdout == "started"
+  when:
+    - platform_service_mgr == "process"
+    - nginx_status.rc != 0
+
+- name: Enable nginx service
+  ansible.builtin.systemd:
+    name: nginx-platform
+    enabled: true
+    state: started
+    daemon_reload: true
+  when: platform_service_mgr == "systemd"

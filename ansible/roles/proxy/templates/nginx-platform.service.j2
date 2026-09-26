@@ -1,0 +1,15 @@
+[Unit]
+Description=Platform lab proxy
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=forking
+PIDFile=/run/nginx.pid
+ExecStart=/usr/sbin/nginx
+ExecReload=/usr/sbin/nginx -s reload
+ExecStop=/usr/sbin/nginx -s quit
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

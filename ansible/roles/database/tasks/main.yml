@@ -1,0 +1,49 @@
+---
+- name: Refresh apt cache
+  ansible.builtin.apt:
+    update_cache: true
+  changed_when: false
+
+- name: Install Postgres client
+  ansible.builtin.apt:
+    name:
+      - postgresql-client
+      - python3-psycopg2
+    state: present
+
+- name: Wait for Postgres
+  ansible.builtin.command: pg_isready -h {{ db_host }} -p {{ db_port }} -U {{ db_admin_user }}
+  register: pg_ready
+  retries: 30
+  delay: 2
+  until: pg_ready.rc == 0
+  changed_when: false
+  run_once: true
+
+- name: Check schema app
+  community.postgresql.postgresql_query:
+    login_host: "{{ db_host }}"
+    login_port: "{{ db_port }}"
+    login_user: "{{ db_admin_user }}"
+    login_password: "{{ db_admin_password }}"
+    login_db: "{{ db_name }}"
+    query: SELECT 1 FROM information_schema.schemata WHERE schema_name = 'app'
+  register: schema_check
+  changed_when: false
+  no_log: true
+  run_once: true
+  retries: 10
+  delay: 2
+  until: schema_check is succeeded
+
+- name: Create schema app
+  community.postgresql.postgresql_query:
+    login_host: "{{ db_host }}"
+    login_port: "{{ db_port }}"
+    login_user: "{{ db_admin_user }}"
+    login_password: "{{ db_admin_password }}"
+    login_db: "{{ db_name }}"
+    query: "CREATE SCHEMA app AUTHORIZATION {{ db_user }}"
+  when: schema_check.query_result | length == 0
+  no_log: true
+  run_once: true

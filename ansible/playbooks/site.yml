@@ -1,0 +1,28 @@
+---
+- name: Wait for SSH
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Wait for connection
+      ansible.builtin.wait_for_connection:
+        timeout: 120
+
+- name: Baseline
+  hosts: all
+  roles:
+    - common
+
+- name: Configure proxy
+  hosts: proxy
+  roles:
+    - proxy
+
+- name: Configure app
+  hosts: app
+  roles:
+    - app
+
+- name: Bootstrap database
+  hosts: app
+  roles:
+    - database

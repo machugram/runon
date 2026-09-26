@@ -1,0 +1,11 @@
+---
+- name: Reload nginx process
+  ansible.builtin.command: /usr/local/bin/run-nginx reload
+  when: platform_service_mgr == "process"
+
+- name: Reload nginx systemd
+  ansible.builtin.systemd:
+    name: nginx-platform
+    state: reloaded
+    daemon_reload: true
+  when: platform_service_mgr == "systemd"

@@ -1,0 +1,11 @@
+---
+- name: Restart app process
+  ansible.builtin.command: /usr/local/bin/run-platform-server restart
+  when: platform_service_mgr == "process"
+
+- name: Restart app systemd
+  ansible.builtin.systemd:
+    name: platform-server
+    state: restarted
+    daemon_reload: true
+  when: platform_service_mgr == "systemd"

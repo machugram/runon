@@ -1,0 +1,9 @@
+{
+  "env": {{ env_name | to_json }},
+  "listen": ":{{ app_listen_port }}",
+  "db_host": {{ db_host | to_json }},
+  "db_port": {{ db_port }},
+  "db_user": {{ db_user | to_json }},
+  "db_password": {{ db_password | to_json }},
+  "db_name": {{ db_name | to_json }}
+}

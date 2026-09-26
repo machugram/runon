@@ -1,0 +1,35 @@
+---
+- name: Create platform group
+  ansible.builtin.group:
+    name: platform
+    system: true
+
+- name: Create platform user
+  ansible.builtin.user:
+    name: platform
+    group: platform
+    system: true
+    create_home: false
+    shell: /usr/sbin/nologin
+
+- name: Create platform directories
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner }}"
+    group: platform
+    mode: "{{ item.mode }}"
+  loop:
+    - { path: /etc/platform, owner: root, mode: "0750" }
+    - { path: /var/log/platform, owner: root, mode: "0750" }
+    - { path: /etc/systemd/system, owner: root, mode: "0755" }
+
+- name: Read pid 1 command
+  ansible.builtin.command: ps -p 1 -o comm=
+  register: platform_pid1
+  changed_when: false
+
+- name: Select service manager
+  ansible.builtin.set_fact:
+    platform_service_mgr: "{{ 'systemd' if (platform_pid1.stdout | trim) == 'systemd' else 'process' }}"
+  changed_when: false

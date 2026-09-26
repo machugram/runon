@@ -1,0 +1,29 @@
+#!/bin/sh
+set -eu
+
+status() {
+  pgrep -x nginx >/dev/null 2>&1
+}
+
+start() {
+  if status; then
+    echo already-running
+    return 0
+  fi
+  nginx
+  echo started
+}
+
+reload() {
+  nginx -s reload
+}
+
+case "${1:-start}" in
+  start) start ;;
+  reload) reload ;;
+  status) status ;;
+  *)
+    echo "usage: $0 start|reload|status" >&2
+    exit 2
+    ;;
+esac
